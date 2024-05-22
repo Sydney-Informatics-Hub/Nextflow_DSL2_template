@@ -1,4 +1,4 @@
-# Assets 
+# `assets/` 
 
 You can store auxillary files that your workflow may bed in here. We don't recommend storing data in your git repository but if you had a samplesheet you'd like to use for automated testing then it could be placed here. Additionally, you may wish to store the following: 
 
