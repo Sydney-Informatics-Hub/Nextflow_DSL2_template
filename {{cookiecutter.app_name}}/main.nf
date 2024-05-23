@@ -20,6 +20,7 @@ nextflow.enable.dsl=2
 // Import processes or subworkflows to be run in the workflow
 // Each of these is a separate .nf script saved in modules/ directory
 // See https://training.nextflow.io/basic_training/modules/#importing-modules 
+include { check_input } from './modules/check_input'
 include { processOne } from './modules/process1'
 include { processTwo } from './modules/process2' 
 
@@ -38,7 +39,7 @@ Cite this pipeline @ INSERT DOI
 Workflow run parameters 
 =======================================================================================
 input       : ${params.input}
-outDir      : ${params.outDir}
+results     : ${params.outDir}
 workDir     : ${workflow.workDir}
 =======================================================================================
 
@@ -54,8 +55,7 @@ def helpMessage() {
 
   Required Arguments:
 
-  --input	Specify full path and name of sample
-		input file (tab separated).
+  --input		Specify full path and name of sample input file.
 
   Optional Arguments:
 
@@ -81,16 +81,18 @@ if ( params.help || params.input == false ){
 // If none of the above are a problem, then run the workflow
 } else {
 	
-// Define channels 
-// See https://www.nextflow.io/docs/latest/channel.html#channels
-// See https://training.nextflow.io/basic_training/channels/ 
-	input = Channel.value("${params.input}")
+	// DEFINE CHANNELS 
+	// See https://www.nextflow.io/docs/latest/channel.html#channels
+	// See https://training.nextflow.io/basic_training/channels/ 
 
-// Run process 1 
-// See https://training.nextflow.io/basic_training/processes/#inputs 
-	processOne(input)
+	// VALIDATE INPUT SAMPLES 
+	check_input(Channel.fromPath(params.input, checkIfExists: true))
+
+	// PROCESS 1
+	// See https://training.nextflow.io/basic_training/processes/#inputs 
+	processOne(check_input.out.samplesheet)
 	
-// Run process 2 which takes output of process 1 
+	// PROCESS 2 USING OUTPUT OF PROCESS 1 
 	processTwo(processOne.out.File)
 }}
 
@@ -105,7 +107,7 @@ Duration    : ${workflow.duration}
 Success     : ${workflow.success}
 workDir     : ${workflow.workDir}
 Exit status : ${workflow.exitStatus}
-outDir      : ${params.outDir}
+results     : ${params.outDir}
 
 =======================================================================================
   """

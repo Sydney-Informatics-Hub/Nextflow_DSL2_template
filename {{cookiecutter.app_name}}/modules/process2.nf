@@ -1,9 +1,11 @@
 // Define the process
 process processTwo {
 	// Define directives 
-	// See: https://www.nextflow.io/docs/latest/process.html#directives
+	// See: https://nextflow.io/docs/edge/process.html#processes
 	debug = true //turn to false to stop printing command stdout to screen
-	publishDir "${params.outDir}/process2", mode: 'copy'
+	tag "WOKRING ON: ${params.input}" 
+	publishDir "${params.outdir}/processTwo", mode: 'copy'
+  container '' 
 
 	// Define input 
 	// See: https://www.nextflow.io/docs/latest/process.html#inputs
