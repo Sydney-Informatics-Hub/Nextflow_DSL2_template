@@ -1,6 +1,7 @@
 process group_samples {
     tag "INPUT: ${checked_samplesheet.fileName}"
-
+	publishDir "${params.outdir}", mode: 'copy'
+    
     input:
     path(checked_samplesheet)
 

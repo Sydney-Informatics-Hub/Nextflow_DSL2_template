@@ -1,5 +1,6 @@
 process generate_report {
     tag "INPUT: ${cohort}"
+		publishDir "${params.outdir}", mode: 'copy'
 
 	  input:
     tuple path(samplesheet), val(cohort)
