@@ -1,18 +1,17 @@
 process check_input {
     tag "INPUT: ${input.fileName}"
-    container 'https://depot.galaxyproject.org/singularity/python:3.8.3'
 
     input:
-		path input
+		path(input)
     
     output:
-    path 'samplesheet.csv' , emit: samplesheet
+    path("validated_samplesheet.csv") , emit: checked_samplesheet
 
-    script: // This process runs ../bin/samplesheetchecker.py 
+    script: // This process runs ../bin/samplesheetchecker.sh
     // See example at: https://github.com/Sydney-Informatics-Hub/Parabricks-Genomics-nf/blob/main/bin/samplesheetchecker.py
     """
-		samplesheetchecker.py \\
-        $input \\
-        samplesheet.csv
+    samplesheetchecker.sh \\
+      ${input} \\
+      > validated_samplesheet.txt
     """
 }
