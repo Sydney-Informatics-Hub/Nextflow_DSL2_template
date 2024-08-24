@@ -21,8 +21,8 @@ nextflow.enable.dsl=2
 // Each of these is a separate .nf script saved in modules/ directory
 // See https://training.nextflow.io/basic_training/modules/#importing-modules 
 include { check_input } from './modules/check_input'
-include { processOne } from './modules/process1'
-include { processTwo } from './modules/process2' 
+include { group_samples } from './modules/group_samples'
+include { generate_report } from './modules/generate_report' 
 
 // Print a header for your pipeline 
 log.info """\
@@ -88,12 +88,24 @@ if ( params.help || params.input == false ){
 	// VALIDATE INPUT SAMPLES 
 	check_input(Channel.fromPath(params.input, checkIfExists: true))
 
-	// PROCESS 1
+	// EXAMPLE PROCESS - SPLIT SAMPLESHEET DEPENDING ON SEQUENCING PLATFORM
 	// See https://training.nextflow.io/basic_training/processes/#inputs 
-	processOne(check_input.out.samplesheet)
+	// Define the input channel for this process
+	group_samples_in = check_input.out.checked_samplesheet
+
+	// Run the process with its input channel
+	group_samples(group_samples_in)
 	
-	// PROCESS 2 USING OUTPUT OF PROCESS 1 
-	processTwo(processOne.out.File)
+	// EXAMPLE PROCESS - SUMMARISE COHORT FROM SAMPLESHEETS
+	// Define the input channel for this process using Nextflow mix operator and some groovy (the use of 'map')
+	// See: https://www.nextflow.io/docs/latest/operator.html
+	generate_report_in = group_samples.out.illumina
+                     .map { file -> tuple(file, 'Illumina') }
+                     .mix(group_samples.out.pacbio
+                          .map { file -> tuple(file, 'PacBio') })
+	
+	// Run the process with its input channel
+	generate_report(generate_report_in)
 }}
 
 // Print workflow execution summary 

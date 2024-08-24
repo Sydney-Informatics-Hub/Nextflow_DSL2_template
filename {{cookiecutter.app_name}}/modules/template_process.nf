@@ -1,27 +1,26 @@
 // Define the process
-process processTwo {
+process generate_report {
 	// Define directives 
 	// See: https://nextflow.io/docs/edge/process.html#processes
-	debug = true //turn to false to stop printing command stdout to screen
-	tag "WOKRING ON: ${params.input}" 
-	publishDir "${params.outdir}/processTwo", mode: 'copy'
+	debug = false //turn to true to print command stdout to screen
+	tag "" 
+	publishDir "${params.outdir}/", mode: 'copy'
   container '' 
 
 	// Define input 
 	// See: https://www.nextflow.io/docs/latest/process.html#inputs
 	input:
-	file("process1out.txt")
+	path("")
 
 	// Define output(s)
 	// See: https://www.nextflow.io/docs/latest/process.html#outputs
 	output:
-	path("process2out.txt")
+	path("")
 
 	// Define code to execute 
 	// See: https://www.nextflow.io/docs/latest/process.html#script
 	script:
 	"""
-    tac processed_cohort.txt | rev \
-    	> process2out.txt
+
 	"""
  }
