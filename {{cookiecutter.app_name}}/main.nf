@@ -39,7 +39,7 @@ Cite this pipeline @ INSERT DOI
 Workflow run parameters 
 =======================================================================================
 input       : ${params.input}
-results     : ${params.outDir}
+results     : ${params.outdir}
 workDir     : ${workflow.workDir}
 =======================================================================================
 
@@ -59,7 +59,7 @@ def helpMessage() {
 
   Optional Arguments:
 
-  --outDir	Specify path to output directory. 
+  --outdir	Specify path to output directory. 
 	
 """.stripIndent()
 }
@@ -85,10 +85,10 @@ if ( params.help || params.input == false ){
 	// See https://www.nextflow.io/docs/latest/channel.html#channels
 	// See https://training.nextflow.io/basic_training/channels/ 
 
-	// VALIDATE INPUT SAMPLES 
+	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - VALIDATE INPUT SAMPLES 
 	check_input(Channel.fromPath(params.input, checkIfExists: true))
 
-	// EXAMPLE PROCESS - SPLIT SAMPLESHEET DEPENDING ON SEQUENCING PLATFORM
+	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - SPLIT SAMPLESHEET DEPENDING ON SEQUENCING PLATFORM
 	// See https://training.nextflow.io/basic_training/processes/#inputs 
 	// Define the input channel for this process
 	group_samples_in = check_input.out.checked_samplesheet
@@ -96,7 +96,7 @@ if ( params.help || params.input == false ){
 	// Run the process with its input channel
 	group_samples(group_samples_in)
 	
-	// EXAMPLE PROCESS - SUMMARISE COHORT FROM SAMPLESHEETS
+	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - SUMMARISE COHORT FROM SAMPLESHEETS
 	// Define the input channel for this process using Nextflow mix operator and some groovy (the use of 'map')
 	// See: https://www.nextflow.io/docs/latest/operator.html
 	generate_report_in = group_samples.out.illumina
@@ -104,7 +104,7 @@ if ( params.help || params.input == false ){
                      .mix(group_samples.out.pacbio
                           .map { file -> tuple(file, 'PacBio') })
 	
-	// Run the process with its input channel
+	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - Run the process with its input channel
 	generate_report(generate_report_in)
 }}
 
@@ -119,7 +119,7 @@ Duration    : ${workflow.duration}
 Success     : ${workflow.success}
 workDir     : ${workflow.workDir}
 Exit status : ${workflow.exitStatus}
-results     : ${params.outDir}
+results     : ${params.outdir}
 
 =======================================================================================
   """
