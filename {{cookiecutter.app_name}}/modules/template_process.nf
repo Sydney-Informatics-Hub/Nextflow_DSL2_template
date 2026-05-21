@@ -1,12 +1,13 @@
 // Define the process
 process generate_report {
-    // Define directives 
+    // Define directives
     // See: https://docs.seqera.io/nextflow/process#processes
-    tag "${id}" 
+    tag "${id}"
     publishDir "${params.outdir}/", mode: 'copy'
-    container '' 
+    container ''
+    label 'small_job'
 
-    // Define input 
+    // Define input
     // See: https://docs.seqera.io/nextflow/process#inputs
     input:
     tuple val(id), path(infile)
@@ -16,7 +17,7 @@ process generate_report {
     output:
     tuple val(id), path("${id}.output")
 
-    // Define code to execute 
+    // Define code to execute
     // See: https://docs.seqera.io/nextflow/process#script
     script:
     """

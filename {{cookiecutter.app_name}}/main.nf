@@ -7,7 +7,7 @@
 //     Include statements for importing processes from `modules/*.nf`
 //     Channel definitions
 //     Workflow structure
-//     Workflow summary logs 
+//     Workflow summary logs
 //
 // Examples are included for each section. Remove them and replace
 // with project-specific code. For more information see:
@@ -20,22 +20,22 @@
 // See https://training.nextflow.io/latest/hello_nextflow/04_hello_modules/
 
 include { FASTQC } from './modules/fastqc'
-include { MULTIQC } from './modules/multiqc' 
+include { MULTIQC } from './modules/multiqc'
 
 def printInfo() {
     // Print pipeline info to the terminal and log
     log.info """\
 
     =======================================================================================
-    Name of the pipeline - nf 
+    Name of the pipeline - nf
     =======================================================================================
 
-    Created by <YOUR NAME> 
+    Created by <YOUR NAME>
     Find documentation @ https://sydney-informatics-hub.github.io/Nextflow_DSL2_template_guide/
     Cite this pipeline @ INSERT DOI
 
     =======================================================================================
-    Workflow run parameters 
+    Workflow run parameters
     =======================================================================================
     input       : ${params.input}
     results     : ${params.outdir}
@@ -46,20 +46,20 @@ def printInfo() {
 }
 
 def helpMessage() {
-    /// Help function 
-    // This is an example of how to set out the help function that 
-    // will be run if run command is incorrect or missing. 
+    /// Help function
+    // This is an example of how to set out the help function that
+    // will be run if run command is incorrect or missing.
     log.info"""
-    Usage:  nextflow run main.nf --input <samples.tsv> 
+    Usage:  nextflow run main.nf --input <samples.tsv>
 
     Required Arguments:
 
-    --input		Specify full path and name of sample input file.
+    --input     Specify full path and name of sample input file.
 
     Optional Arguments:
 
-    --outdir	Specify path to output directory. 
-        
+    --outdir    Specify path to output directory.
+
     """.stripIndent()
 }
 
@@ -83,9 +83,9 @@ workflow {
 
     // If none of the above are a problem, then run the workflow
 
-    // DEFINE CHANNELS 
+    // DEFINE CHANNELS
     // See https://docs.seqera.io/nextflow/workflow#channels-and-values
-    // See https://training.nextflow.io/latest/hello_nextflow/02_hello_channels/ 
+    // See https://training.nextflow.io/latest/hello_nextflow/02_hello_channels/
 
     // Read in the samplesheet
     samplesheet = channel.fromPath(params.input, checkIfExists: true)
@@ -104,6 +104,8 @@ workflow {
 
             // Capture metadata in a Groovy map
             def meta = [
+                platform: row.platform ?: "",
+                seq_centre: row.seq_centre ?: "",
                 min_len: row.min_len ? row.min_len.toInteger() : 0,
                 min_qual: row.min_qual ? row.min_qual.toInteger() : null
             ]
@@ -132,7 +134,7 @@ workflow {
 
     MULTIQC(multiqc_in)
 
-    // Print a workflow execution summary 
+    // Print a workflow execution summary
     workflow.onComplete = {
         def summary = """
         =======================================================================================

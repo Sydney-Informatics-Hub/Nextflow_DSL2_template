@@ -2,6 +2,7 @@ process FASTQC {
     tag "fastqc: ${sample}"
     publishDir "${params.outdir}/fastqc", mode: 'copy'
     container 'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0'
+    label 'medium_job'
 
     input:
     tuple val(sample), path(fastq_1), path(fastq_2)

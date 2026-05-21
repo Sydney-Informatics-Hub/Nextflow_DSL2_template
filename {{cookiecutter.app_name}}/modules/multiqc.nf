@@ -1,6 +1,7 @@
 process MULTIQC {
     publishDir "${params.outdir}/multiqc", mode: 'copy'
     container 'quay.io/biocontainers/multiqc:1.19--pyhdfd78af_0'
+    label 'small_job'
 
     input:
     path "*"
