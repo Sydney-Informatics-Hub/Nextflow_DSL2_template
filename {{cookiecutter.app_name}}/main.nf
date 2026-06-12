@@ -16,7 +16,8 @@
 // ===================================================================
 
 // Import processes or subworkflows to be run in the workflow
-// Each of these is a separate .nf script saved in the modules/ directory
+// Each of these is a separate .nf script saved in the modules/ and 
+// subowrkflows/ directories, respectively
 // See https://training.nextflow.io/latest/hello_nextflow/04_hello_modules/
 
 include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
@@ -32,7 +33,7 @@ def printInfo() {
     =======================================================================================
 
     Created by <YOUR NAME>
-    Find documentation @ https://sydney-informatics-hub.github.io/Nextflow_DSL2_template_guide/
+    Find documentation @ https://sydney-informatics-hub.github.io/template-nf-guide/
     Cite this pipeline @ INSERT DOI
 
     =======================================================================================
