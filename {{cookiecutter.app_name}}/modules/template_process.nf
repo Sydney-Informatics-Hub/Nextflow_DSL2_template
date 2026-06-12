@@ -3,7 +3,6 @@ process generate_report {
     // Define directives
     // See: https://docs.seqera.io/nextflow/process#processes
     tag "${id}"
-    publishDir "${params.outdir}/", mode: 'copy'
     container ''
     label 'small_job'
 

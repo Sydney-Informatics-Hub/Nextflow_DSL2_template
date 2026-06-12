@@ -24,6 +24,16 @@ include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
 include { FASTQC } from './modules/fastqc'
 include { MULTIQC } from './modules/multiqc'
 
+// Define pipeline parameters
+// See https://docs.seqera.io/nextflow/workflow#parameters
+params {
+    help: Boolean               = false
+    input: Path                 = null
+    outdir: String              = null
+    multiqc_title: String?      = null
+    publish_dir_mode: String    = 'copy'
+}
+
 def printInfo() {
     // Print pipeline info to the terminal and log
     log.info """\
@@ -69,6 +79,7 @@ def helpMessage() {
 // See https://docs.seqera.io/nextflow/workflow
 workflow {
 
+    main:
     // Run the printInfo function to display pipeline info
     printInfo()
 
@@ -110,21 +121,38 @@ workflow {
 
     MULTIQC(multiqc_in)
 
+    publish:
+    fastqc_logs = FASTQC.out.logs
+    multiqc_report = MULTIQC.out.report
+    multiqc_data = MULTIQC.out.data
+
+    onComplete:
     // Print a workflow execution summary
-    workflow.onComplete = {
-        def summary = """
-        =======================================================================================
-        Workflow execution summary
-        =======================================================================================
+    def summary = """
+    =======================================================================================
+    Workflow execution summary
+    =======================================================================================
 
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        Exit status : ${workflow.exitStatus}
-        results     : ${params.outdir}
+    Duration    : ${workflow.duration}
+    Success     : ${workflow.success}
+    workDir     : ${workflow.workDir}
+    Exit status : ${workflow.exitStatus}
+    results     : ${params.outdir}
 
-        =======================================================================================
-        """
-        println summary.replaceAll(/(^|\n)\s+/, '\n')
+    =======================================================================================
+    """
+    log.info summary.replaceAll(/(^|\n)\s+/, '\n')
+
+}
+
+output {
+    fastqc_logs {
+        path { _id, _logs -> "fastqc" }
+    }
+    multiqc_report {
+        path { _report -> "multiqc" }
+    }
+    multiqc_data {
+        path { _data -> "multiqc" }
     }
 }

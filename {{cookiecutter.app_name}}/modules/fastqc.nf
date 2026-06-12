@@ -1,6 +1,5 @@
 process FASTQC {
-    tag "fastqc: ${sample}"
-    publishDir "${params.outdir}/fastqc", mode: 'copy'
+    tag "${sample}"
     container 'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0'
     label 'medium_job'
 
