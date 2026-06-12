@@ -1,3 +1,3 @@
 sample,fastq_1,fastq_2,platform,seq_centre
-earlycasualcaiman,/path/to/1_171015_HHT5NDSXX_earlycasualcaiman_XXXXXX_1_1k.fastq.gz,/path/to/1_171015_HHT5NDSXX_earlycasualcaiman_XXXXXX_2_1k.fastq.gz,illumina,agrf
-vapidkangaroo,/path/to/1_171015_HHT5NDSXX_vapidkangaroo_XXXXXX_1_1k.fastq.gz,,pacbio,my_local_sequencing_centre
+earlycasualcaiman,tests/data/earlycasualcaiman.R1.fastq.gz,tests/data/earlycasualcaiman.R2.fastq.gz,illumina,agrf
+vapidkangaroo,tests/data/vapidkangaroo.fastq.gz,,pacbio,my_local_sequencing_centre

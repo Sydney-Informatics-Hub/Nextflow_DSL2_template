@@ -19,6 +19,7 @@
 // Each of these is a separate .nf script saved in the modules/ directory
 // See https://training.nextflow.io/latest/hello_nextflow/04_hello_modules/
 
+include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
 include { FASTQC } from './modules/fastqc'
 include { MULTIQC } from './modules/multiqc'
 
@@ -70,6 +71,9 @@ workflow {
     // Run the printInfo function to display pipeline info
     printInfo()
 
+    // Validate parameters
+    validateParameters(parameters_schema: "${projectDir}/nextflow_schema.json")
+
     // Show help message if --help is run or (||) a required parameter (input) is not provided
     if ( params.help || !params.input ){
         // Invoke the help function above and exit
@@ -88,41 +92,12 @@ workflow {
     // See https://training.nextflow.io/latest/hello_nextflow/02_hello_channels/
 
     // Read in the samplesheet
-    samplesheet = channel.fromPath(params.input, checkIfExists: true)
-        .splitCsv( header: true )
-
-    // DEMO CODE: MODIFY FOR YOUR OWN WORKFLOWS - parse and validate samplesheet
-    // See https://docs.seqera.io/nextflow/reference/operator
-    samplesheet = samplesheet
-        .map { row -> {
-            // Check required columns
-            assert !!row.sample : "Error: must provide a sample ID"
-            assert !!row.fastq_1 : "Error: must provide an input FASTQ file"
-
-            // Support optional columns
-            def fastq_2 = row.fastq_2 ? file(row.fastq_2, checkIfExists: true) : []  // Empty lists can be used as optional files in processes
-
-            // Capture metadata in a Groovy map
-            def meta = [
-                platform: row.platform ?: "",
-                seq_centre: row.seq_centre ?: "",
-                min_len: row.min_len ? row.min_len.toInteger() : 0,
-                min_qual: row.min_qual ? row.min_qual.toInteger() : null
-            ]
-
-            // Create tuple for passing to processes
-            return [
-                row.sample,
-                file(row.fastq_1, checkIfExists: true),
-                fastq_2,
-                meta
-            ]
-        }}
+    samplesheet = channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
 
     // DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - RUN FASTQC
     // Define input channel for FASTQC
     fastqc_in = samplesheet
-        .map { sample, fq1, fq2, _meta -> [ sample, fq1, fq2 ] }  // We just want the FASTQs for FASTQC
+        .map { meta, fq1, fq2 -> [ meta.sample, fq1, fq2 ] }  // We just want the FASTQs for FASTQC
 
     FASTQC(fastqc_in)
 
