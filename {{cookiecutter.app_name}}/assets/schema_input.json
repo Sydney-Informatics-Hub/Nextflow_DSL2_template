@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/Sydney-Informatics-Hub/Nextflow_DSL2_template/refs/heads/dev-add-nf-schema/%7B%7Bcookiecutter.app_name%7D%7D/assets/schema_input.json",
+    "title": "Samplesheet validation schema",
+    "description": "Schema for the samplesheet used in this pipeline",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["sample"]
+            },
+            "fastq_1": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq', '.fastq', '.fq.gz' or '.fastq.gz'"
+            },
+            "fastq_2": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq', '.fastq', '.fq.gz' or '.fastq.gz'"
+            },
+            "min_len": {
+                "type": "integer",
+                "meta": ["min_len"]
+            },
+            "min_qual": {
+                "type": "integer",
+                "meta": ["min_qual"]
+            },
+            "platform": {
+                "type": "string",
+                "meta": ["platform"]
+            },
+            "seq_centre": {
+                "type": "string",
+                "meta": ["seq_centre"]
+            }
+        },
+        "required": ["sample", "fastq_1"]
+    }
+}

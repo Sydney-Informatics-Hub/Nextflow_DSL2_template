@@ -1,128 +1,158 @@
 #!/usr/bin/env nextflow
 
-/// To use DSL-2 will need to include this
-nextflow.enable.dsl=2
-
 // =================================================================
-// main.nf is the pipeline script for a nextflow pipeline
-// Should contain the following sections:
-	// Process definitions
-    // Channel definitions
-    // Workflow structure
-	// Workflow summary logs 
-
+//
+// main.nf is the main pipeline script for a nextflow pipeline
+// This file should contain the following sections:
+//     Include statements for importing processes from `modules/*.nf`
+//     Channel definitions
+//     Workflow structure
+//     Workflow summary logs
+//
 // Examples are included for each section. Remove them and replace
 // with project-specific code. For more information see:
-// https://www.nextflow.io/docs/latest/index.html.
+// https://docs.seqera.io/nextflow
 //
 // ===================================================================
 
 // Import processes or subworkflows to be run in the workflow
-// Each of these is a separate .nf script saved in modules/ directory
-// See https://training.nextflow.io/basic_training/modules/#importing-modules 
-include { check_input } from './modules/check_input'
-include { group_samples } from './modules/group_samples'
-include { generate_report } from './modules/generate_report' 
+// Each of these is a separate .nf script saved in the modules/ and 
+// subowrkflows/ directories, respectively
+// See https://training.nextflow.io/latest/hello_nextflow/04_hello_modules/
 
-// Print a header for your pipeline 
-log.info """\
+include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
+include { FASTQC } from './modules/fastqc'
+include { MULTIQC } from './modules/multiqc'
 
-=======================================================================================
-Name of the pipeline - nf 
-=======================================================================================
+// Define pipeline parameters
+// See https://docs.seqera.io/nextflow/workflow#parameters
+params {
+    help: Boolean               = false
+    input: Path                 = null
+    outdir: String              = null
+    multiqc_title: String?      = null
+    publish_dir_mode: String    = 'copy'
+}
 
-Created by <YOUR NAME> 
-Find documentation @ https://sydney-informatics-hub.github.io/Nextflow_DSL2_template_guide/
-Cite this pipeline @ INSERT DOI
+def printInfo() {
+    // Print pipeline info to the terminal and log
+    log.info """\
 
-=======================================================================================
-Workflow run parameters 
-=======================================================================================
-input       : ${params.input}
-results     : ${params.outdir}
-workDir     : ${workflow.workDir}
-=======================================================================================
+    =======================================================================================
+    Name of the pipeline - nf
+    =======================================================================================
 
-"""
+    Created by <YOUR NAME>
+    Find documentation @ https://sydney-informatics-hub.github.io/template-nf-guide/
+    Cite this pipeline @ INSERT DOI
 
-/// Help function 
-// This is an example of how to set out the help function that 
-// will be run if run command is incorrect or missing. 
+    =======================================================================================
+    Workflow run parameters
+    =======================================================================================
+    input       : ${params.input}
+    results     : ${params.outdir}
+    workDir     : ${workflow.workDir}
+    =======================================================================================
+
+    """.stripIndent()
+}
 
 def helpMessage() {
+    /// Help function
+    // This is an example of how to set out the help function that
+    // will be run if run command is incorrect or missing.
     log.info"""
-  Usage:  nextflow run main.nf --input <samples.tsv> 
+    Usage:  nextflow run main.nf --input <samples.tsv>
 
-  Required Arguments:
+    Required Arguments:
 
-  --input		Specify full path and name of sample input file.
+    --input     Specify full path and name of sample input file.
 
-  Optional Arguments:
+    Optional Arguments:
 
-  --outdir	Specify path to output directory. 
-	
-""".stripIndent()
+    --outdir    Specify path to output directory.
+
+    """.stripIndent()
 }
 
 // Define workflow structure. Include some input/runtime tests here.
-// See https://www.nextflow.io/docs/latest/dsl2.html?highlight=workflow#workflow
+// See https://docs.seqera.io/nextflow/workflow
 workflow {
 
-// Show help message if --help is run or (||) a required parameter (input) is not provided
+    main:
+    // Run the printInfo function to display pipeline info
+    printInfo()
 
-if ( params.help || params.input == false ){   
-// Invoke the help function above and exit
-	helpMessage()
-	exit 1
-	// consider adding some extra contigencies here.
-	// could validate path of all input files in list?
-	// could validate indexes for reference exist?
+    // Validate parameters
+    validateParameters(parameters_schema: "${projectDir}/nextflow_schema.json")
 
-// If none of the above are a problem, then run the workflow
-} else {
-	
-	// DEFINE CHANNELS 
-	// See https://www.nextflow.io/docs/latest/channel.html#channels
-	// See https://training.nextflow.io/basic_training/channels/ 
+    // Show help message if --help is run or (||) a required parameter (input) is not provided
+    if ( params.help || !params.input ){
+        // Invoke the help function above and exit
+        helpMessage()
+        exit 1
 
-	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - VALIDATE INPUT SAMPLES 
-	check_input(Channel.fromPath(params.input, checkIfExists: true))
+        // consider adding some extra contigencies here.
+        // could validate path of all input files in list?
+        // could validate indexes for reference exist?
+    }
 
-	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - SPLIT SAMPLESHEET DEPENDING ON SEQUENCING PLATFORM
-	// See https://training.nextflow.io/basic_training/processes/#inputs 
-	// Define the input channel for this process
-	group_samples_in = check_input.out.checked_samplesheet
+    // If none of the above are a problem, then run the workflow
 
-	// Run the process with its input channel
-	group_samples(group_samples_in)
-	
-	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - SUMMARISE COHORT FROM SAMPLESHEETS
-	// Define the input channel for this process using Nextflow mix operator and some groovy (the use of 'map')
-	// See: https://www.nextflow.io/docs/latest/operator.html
-	generate_report_in = group_samples.out.illumina
-                     .map { file -> tuple(file, 'Illumina') }
-                     .mix(group_samples.out.pacbio
-                          .map { file -> tuple(file, 'PacBio') })
-	
-	// DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - Run the process with its input channel
-	generate_report(generate_report_in)
-}}
+    // DEFINE CHANNELS
+    // See https://docs.seqera.io/nextflow/workflow#channels-and-values
+    // See https://training.nextflow.io/latest/hello_nextflow/02_hello_channels/
 
-// Print workflow execution summary 
-workflow.onComplete {
-summary = """
-=======================================================================================
-Workflow execution summary
-=======================================================================================
+    // Read in the samplesheet
+    samplesheet = channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
 
-Duration    : ${workflow.duration}
-Success     : ${workflow.success}
-workDir     : ${workflow.workDir}
-Exit status : ${workflow.exitStatus}
-results     : ${params.outdir}
+    // DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - RUN FASTQC
+    // Define input channel for FASTQC
+    fastqc_in = samplesheet
+        .map { meta, fq1, fq2 -> [ meta.sample, fq1, fq2 ] }  // We just want the FASTQs for FASTQC
 
-=======================================================================================
-  """
-println summary
+    FASTQC(fastqc_in)
 
+    // DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - RUN MULTIQC
+    // Define input channel for MULTIQC
+    multiqc_in = FASTQC.out.logs
+        .map { _sample, logs -> logs }
+        .collect()
+
+    MULTIQC(multiqc_in)
+
+    publish:
+    fastqc_logs = FASTQC.out.logs
+    multiqc_report = MULTIQC.out.report
+    multiqc_data = MULTIQC.out.data
+
+    onComplete:
+    // Print a workflow execution summary
+    def summary = """
+    =======================================================================================
+    Workflow execution summary
+    =======================================================================================
+
+    Duration    : ${workflow.duration}
+    Success     : ${workflow.success}
+    workDir     : ${workflow.workDir}
+    Exit status : ${workflow.exitStatus}
+    results     : ${params.outdir}
+
+    =======================================================================================
+    """
+    log.info summary.replaceAll(/(^|\n)\s+/, '\n')
+
+}
+
+output {
+    fastqc_logs {
+        path { _id, _logs -> "fastqc" }
+    }
+    multiqc_report {
+        path { _report -> "multiqc" }
+    }
+    multiqc_data {
+        path { _data -> "multiqc" }
+    }
 }

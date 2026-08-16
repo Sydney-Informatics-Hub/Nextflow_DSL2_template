@@ -1,10 +1,10 @@
 # Pipeline name
 
-## Workflow description 
+## Workflow description
 
-## User guide 
+## User guide
 
-## Component tools 
+## Component tools
 
 ## Additional notes
 
