@@ -1,25 +1,34 @@
+// Enable typed syntax
+// See: https://docs.seqera.io/nextflow/process-typed
+nextflow.enable.types = true
+
 // Define the process
 process generate_report {
     // Define directives
     // See: https://docs.seqera.io/nextflow/process#processes
-    tag "${id}"
+    tag "${meta.sample}"
     container ''
     label 'small_job'
 
     // Define input
-    // See: https://docs.seqera.io/nextflow/process#inputs
+    // See: https://docs.seqera.io/nextflow/process-typed#inputs
     input:
-    tuple val(id), path(infile)
+    tuple(meta: Record, infile: Path)
+
+    // Define staging directives
+    // See: https://docs.seqera.io/nextflow/process-typed#stage-directives
+    stage:
+    stageAs infile, 'stageDir/*'
 
     // Define output(s)
-    // See: https://docs.seqera.io/nextflow/process#outputs
+    // See: https://docs.seqera.io/nextflow/process-typed#outputs
     output:
-    tuple val(id), path("${id}.output")
+    out: Tuple = tuple(meta, file("${meta.sample}.output"))
 
     // Define code to execute
-    // See: https://docs.seqera.io/nextflow/process#script
+    // See: https://docs.seqera.io/nextflow/process-typed#script
     script:
     """
-    cp ${infile} ${id}.output
+    cp ${infile} ${meta.sample}.output
     """
 }
