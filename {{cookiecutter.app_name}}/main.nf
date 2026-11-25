@@ -1,4 +1,5 @@
 #!/usr/bin/env nextflow
+nextflow.enable.types = true
 
 // =================================================================
 //
@@ -20,82 +21,96 @@
 // subowrkflows/ directories, respectively
 // See https://training.nextflow.io/latest/hello_nextflow/04_hello_modules/
 
-include { validateParameters; samplesheetToList } from 'plugin/nf-schema'
+include { paramsSummaryLog; paramsHelp; validateParameters } from 'plugin/nf-schema'
 include { FASTQC } from './modules/fastqc'
 include { MULTIQC } from './modules/multiqc'
 
-// Define pipeline parameters
+// Define pipeline parameters, including their types
 // See https://docs.seqera.io/nextflow/workflow#parameters
 params {
+    // A `?` after the type means the parameter is nullable, i.e. it can be left blank
+    // Although `input` is required, we want to use nf-schema to manage parameters,
+    // so we bypass Nextflow's checks
+    input: Channel<SampleSheet>? = null  // Nextflow reads this in automatically as a SampleSheet type (defined below)
     help: Boolean               = false
-    input: Path                 = null
-    outdir: String              = null
     multiqc_title: String?      = null
-    publish_dir_mode: String    = 'copy'
 }
 
-def printInfo() {
-    // Print pipeline info to the terminal and log
-    log.info """\
-
-    =======================================================================================
-    Name of the pipeline - nf
-    =======================================================================================
-
-    Created by <YOUR NAME>
-    Find documentation @ https://sydney-informatics-hub.github.io/template-nf-guide/
-    Cite this pipeline @ INSERT DOI
-
-    =======================================================================================
-    Workflow run parameters
-    =======================================================================================
-    input       : ${params.input}
-    results     : ${params.outdir}
-    workDir     : ${workflow.workDir}
-    =======================================================================================
-
-    """.stripIndent()
+// Define the samplesheet format
+record SampleSheet {
+    sample: String
+    fastq_1: Path
+    fastq_2: Path?
+    min_len: Integer?
+    min_qual: Integer?
+    platform: String?
+    seq_centre: String?
 }
 
-def helpMessage() {
-    /// Help function
-    // This is an example of how to set out the help function that
-    // will be run if run command is incorrect or missing.
-    log.info"""
-    Usage:  nextflow run main.nf --input <samples.tsv>
+// def printInfo() {
+//     // Print pipeline info to the terminal and log
+//     log.info """\
 
-    Required Arguments:
+//     =======================================================================================
+//     Name of the pipeline - nf
+//     =======================================================================================
 
-    --input     Specify full path and name of sample input file.
+//     Created by <YOUR NAME>
+//     Find documentation @ https://sydney-informatics-hub.github.io/template-nf-guide/
+//     Cite this pipeline @ INSERT DOI
 
-    Optional Arguments:
+//     =======================================================================================
+//     Workflow run parameters
+//     =======================================================================================
+//     input       : ${params.input}
+//     results     : ${params.outdir}
+//     workDir     : ${workflow.workDir}
+//     =======================================================================================
 
-    --outdir    Specify path to output directory.
+//     """.stripIndent()
+// }
 
-    """.stripIndent()
-}
+// def helpMessage() {
+//     /// Help function
+//     // This is an example of how to set out the help function that
+//     // will be run if run command is incorrect or missing.
+//     log.info"""
+//     Usage:  nextflow run main.nf --input <samples.tsv>
 
-// Define workflow structure. Include some input/runtime tests here.
+//     Required Arguments:
+
+//     --input     Specify full path and name of sample input file.
+
+//     Optional Arguments:
+
+//     --outdir    Specify path to output directory.
+
+//     """.stripIndent()
+// }
+
+// Define workflow structure.
 // See https://docs.seqera.io/nextflow/workflow
 workflow {
 
     main:
-    // Run the printInfo function to display pipeline info
-    printInfo()
+    // Start by printing run information, including non-default parameters,
+    // working directory, run name, etc.
+    // This function is provided by the nf-schema plugin
+    log.info paramsSummaryLog()
+
+    // Show help message and exit immediately if --help is provided
+    if ( params.help ){
+        // Invoke the nf-schema help function and exit
+        log.info paramsHelp()
+        exit(1, null)
+    }
 
     // Validate parameters
+    // The nf-schema plugin checks the parameters against the
+    // `nextflow_schema.json` file. Use that file to specify whether
+    // parameters are required or if files need to exist.
+    // See https://nextflow-io.github.io/nf-schema/latest/
     validateParameters(parameters_schema: "${projectDir}/nextflow_schema.json")
-
-    // Show help message if --help is run or (||) a required parameter (input) is not provided
-    if ( params.help || !params.input ){
-        // Invoke the help function above and exit
-        helpMessage()
-        exit 1
-
-        // consider adding some extra contigencies here.
-        // could validate path of all input files in list?
-        // could validate indexes for reference exist?
-    }
 
     // If none of the above are a problem, then run the workflow
 
@@ -103,28 +118,29 @@ workflow {
     // See https://docs.seqera.io/nextflow/workflow#channels-and-values
     // See https://training.nextflow.io/latest/hello_nextflow/02_hello_channels/
 
-    // Read in the samplesheet
-    samplesheet = channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+    // Re-structure the samplesheet
+    // Some data from the samplesheet is metadata that is better passed as a single map object
+    samplesheet = params.input
+        .map { row -> tuple(
+            row.subMap( ['sample', 'min_len', 'min_qual', 'platform', 'seq_type'] ),
+            row.fastq_1,
+            row.fastq_2
+        ) }
 
     // DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - RUN FASTQC
-    // Define input channel for FASTQC
-    fastqc_in = samplesheet
-        .map { meta, fq1, fq2 -> [ meta.sample, fq1, fq2 ] }  // We just want the FASTQs for FASTQC
-
-    FASTQC(fastqc_in)
+    fqc_logs = FASTQC(samplesheet)
 
     // DEMO CODE: DELETE FOR YOUR OWN WORKFLOWS - EXAMPLE PROCESS - RUN MULTIQC
     // Define input channel for MULTIQC
-    multiqc_in = FASTQC.out.logs
-        .map { _sample, logs -> logs }
+    multiqc_in = fqc_logs
+        .map { _meta, logs -> logs }
         .collect()
 
-    MULTIQC(multiqc_in)
+    multiqc_out = MULTIQC(multiqc_in)
 
     publish:
-    fastqc_logs = FASTQC.out.logs
-    multiqc_report = MULTIQC.out.report
-    multiqc_data = MULTIQC.out.data
+    fastqc_logs = fqc_logs
+    multiqc_outputs = multiqc_out
 
     onComplete:
     // Print a workflow execution summary
@@ -136,8 +152,8 @@ workflow {
     Duration    : ${workflow.duration}
     Success     : ${workflow.success}
     workDir     : ${workflow.workDir}
+    outputDir   : ${workflow.outputDir}
     Exit status : ${workflow.exitStatus}
-    results     : ${params.outdir}
 
     =======================================================================================
     """
@@ -147,12 +163,9 @@ workflow {
 
 output {
     fastqc_logs {
-        path { _id, _logs -> "fastqc" }
+        path 'fastqc'
     }
-    multiqc_report {
-        path { _report -> "multiqc" }
-    }
-    multiqc_data {
-        path { _data -> "multiqc" }
+    multiqc_outputs {
+        path 'multiqc'
     }
 }
