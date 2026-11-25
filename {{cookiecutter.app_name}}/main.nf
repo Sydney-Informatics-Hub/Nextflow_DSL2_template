@@ -32,8 +32,8 @@ params {
     // Although `input` is required, we want to use nf-schema to manage parameters,
     // so we bypass Nextflow's checks
     input: Channel<SampleSheet>? = null  // Nextflow reads this in automatically as a SampleSheet type (defined below)
-    help: Boolean               = false
-    multiqc_title: String?      = null
+    help: Boolean                = false
+    multiqc_title: String?       = null
 }
 
 // Define the samplesheet format
@@ -122,7 +122,7 @@ workflow {
     // Some data from the samplesheet is metadata that is better passed as a single map object
     samplesheet = params.input
         .map { row -> tuple(
-            row.subMap( ['sample', 'min_len', 'min_qual', 'platform', 'seq_type'] ),
+            row.subMap( ['sample', 'min_len', 'min_qual', 'platform', 'seq_centre'] ),
             row.fastq_1,
             row.fastq_2
         ) }
