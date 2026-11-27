@@ -29,6 +29,6 @@ process generate_report {
     // See: https://docs.seqera.io/nextflow/process-typed#script
     script:
     """
-    cp ${infile} ${meta.sample}.output
+    cp "${infile}" "${meta.sample}.output"
     """
 }

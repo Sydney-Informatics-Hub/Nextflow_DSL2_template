@@ -1,0 +1,29 @@
+{
+    "Test the template process": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "sample": "test_sample"
+                        },
+                        "test_sample.output:md5,11976fe56ee7f0ebdb023a73361b71a0"
+                    ]
+                ],
+                "out": [
+                    [
+                        {
+                            "sample": "test_sample"
+                        },
+                        "test_sample.output:md5,11976fe56ee7f0ebdb023a73361b71a0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-27T15:45:23.536275858",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.7"
+        }
+    }
+}

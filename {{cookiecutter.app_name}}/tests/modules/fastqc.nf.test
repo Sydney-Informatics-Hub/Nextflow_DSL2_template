@@ -1,0 +1,63 @@
+nextflow_process {
+
+    name "Test Process FASTQC"
+    script "modules/fastqc.nf"
+    process "FASTQC"
+
+    test("Test FASTQC with two FASTQs") {
+
+        when {
+            params {
+
+            }
+            process {
+                """
+                input[0] = channel.of(
+                    tuple(
+                        record( sample: 'earlycasualcaiman' ),
+                        file('../../../tests/data/earlycasualcaiman.R1.fastq.gz'),
+                        file('../../../tests/data/earlycasualcaiman.R2.fastq.gz')
+                    )
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def logs = process.out[0]
+                .collect { _meta, logs -> logs }
+            assert logs.get(0) ==~ ".*/fastqc_earlycasualcaiman_logs"
+        }
+
+    }
+
+    test("Test FASTQC with one FASTQ") {
+
+        when {
+            params {
+
+            }
+            process {
+                """
+                input[0] = channel.of(
+                    tuple(
+                        record( sample: 'vapidkangaroo' ),
+                        file('../../../tests/data/vapidkangaroo.fastq.gz'),
+                        null
+                    )
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def logs = process.out[0]
+                .collect { _meta, logs -> logs }
+            assert logs.get(0) ==~ ".*/fastqc_vapidkangaroo_logs"
+        }
+
+    }
+
+}

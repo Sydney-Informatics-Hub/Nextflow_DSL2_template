@@ -1,0 +1,58 @@
+nextflow_process {
+
+    name "Test Process MULTIQC"
+    script "modules/multiqc.nf"
+    process "MULTIQC"
+
+    test("Test MultiQC") {
+
+        setup {
+
+            run("FASTQC") {
+                script "modules/fastqc.nf"
+                process {
+                    """
+                    input[0] = channel.of(
+                        tuple(
+                            record( sample: 'earlycasualcaiman' ),
+                            file('../../../tests/data/earlycasualcaiman.R1.fastq.gz'),
+                            file('../../../tests/data/earlycasualcaiman.R2.fastq.gz')
+                        ),
+                        tuple(
+                            record( sample: 'vapidkangaroo' ),
+                            file('../../../tests/data/vapidkangaroo.fastq.gz'),
+                            null
+                        )
+                    )
+                    """
+                }
+            }
+
+        }
+
+        when {
+            params {
+
+            }
+            process {
+                """
+                input[0] = FASTQC.out.logs
+                    .map { _meta, logs -> logs }
+                    .collect()
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def report = process.out[0]
+                .collect { mqc_out -> mqc_out.report }
+            def data = process.out[0]
+                .collect { mqc_out -> mqc_out.data }
+            assert report.get(0) ==~ ".*/multiqc_report.html"
+            assert data.get(0) ==~ ".*/multiqc_data"
+        }
+
+    }
+
+}
